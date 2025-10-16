@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
     @Environment(\.appTheme) private var theme
+    @EnvironmentObject private var router: AppRouter
+    @State private var rewardMessage: String?
 
     init(viewModel: HomeViewModel = HomeViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -20,6 +22,21 @@ struct HomeView: View {
         .background(theme.colors.background.ignoresSafeArea())
         .onAppear {
             viewModel.onAppear()
+        }
+        .onReceive(router.$pendingRewardMessage.removeDuplicates()) { message in
+            guard let message else { return }
+            rewardMessage = message
+            router.pendingRewardMessage = nil
+        }
+        .alert(rewardMessage ?? "", isPresented: Binding(
+            get: { rewardMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    rewardMessage = nil
+                }
+            }
+        )) {
+            Button("OK", role: .cancel) {}
         }
     }
 
@@ -83,4 +100,5 @@ struct HomeView: View {
 #Preview {
     HomeView()
         .environment(\.appTheme, .default)
+        .environmentObject(AppRouter())
 }

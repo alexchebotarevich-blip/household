@@ -1,50 +1,45 @@
 import SwiftUI
 
-struct RootTabView: View {
-    private enum Tab: Hashable {
-        case home
-        case tasks
-        case shopping
-        case profile
-
-        var title: String {
-            switch self {
-            case .home: return "Home"
-            case .tasks: return "Tasks"
-            case .shopping: return "Shopping"
-            case .profile: return "Profile"
-            }
-        }
-
-        var systemImage: String {
-            switch self {
-            case .home: return "house.fill"
-            case .tasks: return "checkmark.circle"
-            case .shopping: return "cart.fill"
-            case .profile: return "person.crop.circle"
-            }
+private extension AppTab {
+    var title: String {
+        switch self {
+        case .home: return "Home"
+        case .tasks: return "Tasks"
+        case .shopping: return "Shopping"
+        case .profile: return "Profile"
         }
     }
 
-    @State private var selectedTab: Tab = .home
+    var systemImage: String {
+        switch self {
+        case .home: return "house.fill"
+        case .tasks: return "checkmark.circle"
+        case .shopping: return "cart.fill"
+        case .profile: return "person.crop.circle"
+        }
+    }
+}
+
+struct RootTabView: View {
+    @EnvironmentObject private var router: AppRouter
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $router.selectedTab) {
             HomeView()
-                .tabItem { Label(Tab.home.title, systemImage: Tab.home.systemImage) }
-                .tag(Tab.home)
+                .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.systemImage) }
+                .tag(AppTab.home)
 
             TasksView()
-                .tabItem { Label(Tab.tasks.title, systemImage: Tab.tasks.systemImage) }
-                .tag(Tab.tasks)
+                .tabItem { Label(AppTab.tasks.title, systemImage: AppTab.tasks.systemImage) }
+                .tag(AppTab.tasks)
 
             ShoppingView()
-                .tabItem { Label(Tab.shopping.title, systemImage: Tab.shopping.systemImage) }
-                .tag(Tab.shopping)
+                .tabItem { Label(AppTab.shopping.title, systemImage: AppTab.shopping.systemImage) }
+                .tag(AppTab.shopping)
 
             ProfileView()
-                .tabItem { Label(Tab.profile.title, systemImage: Tab.profile.systemImage) }
-                .tag(Tab.profile)
+                .tabItem { Label(AppTab.profile.title, systemImage: AppTab.profile.systemImage) }
+                .tag(AppTab.profile)
         }
         .tint(Color.accentColor)
     }
@@ -53,6 +48,7 @@ struct RootTabView: View {
 #Preview {
     RootTabView()
         .environment(\.appTheme, AppTheme.default)
+        .environmentObject(AppRouter())
         .environmentObject(AppEnvironment())
         .environmentObject(FamilyRoleStore())
 }

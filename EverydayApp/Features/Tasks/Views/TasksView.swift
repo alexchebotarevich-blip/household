@@ -3,8 +3,10 @@ import SwiftUI
 struct TasksView: View {
     @StateObject private var viewModel: TasksViewModel
     @Environment(\.appTheme) private var theme
+    @EnvironmentObject private var router: AppRouter
     @State private var newTaskTitle: String = ""
     @State private var newTaskDate: Date = .now.addingTimeInterval(3600)
+    @State private var highlightedTaskID: UUID?
 
     init(viewModel: TasksViewModel = TasksViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -25,8 +27,11 @@ struct TasksView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        .padding(.vertical, theme.spacing.xSmall)
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
+                        .background(highlightBackground(for: task.id))
+                        .clipShape(RoundedRectangle(cornerRadius: theme.spacing.small, style: .continuous))
                     }
                 }
                 .listStyle(.plain)
@@ -52,6 +57,17 @@ struct TasksView: View {
             .background(theme.colors.background.ignoresSafeArea())
             .navigationTitle("Tasks")
         }
+        .onReceive(router.$highlightedTaskID.removeDuplicates()) { taskID in
+            highlightedTaskID = taskID
+            if taskID != nil {
+                router.clearTaskHighlight()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                    if highlightedTaskID == taskID {
+                        highlightedTaskID = nil
+                    }
+                }
+            }
+        }
     }
 
     private var filterPicker: some View {
@@ -61,6 +77,16 @@ struct TasksView: View {
             }
         }
         .pickerStyle(.segmented)
+    }
+
+    private func highlightBackground(for taskID: UUID) -> some View {
+        Group {
+            if highlightedTaskID == taskID {
+                theme.colors.primary.opacity(0.18)
+            } else {
+                Color.clear
+            }
+        }
     }
 
     private var emptyState: some View {
@@ -80,4 +106,5 @@ struct TasksView: View {
 #Preview {
     TasksView()
         .environment(\.appTheme, .default)
+        .environmentObject(AppRouter())
 }

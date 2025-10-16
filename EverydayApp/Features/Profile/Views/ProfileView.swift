@@ -52,7 +52,9 @@ struct ProfileView: View {
                 }
 
                 Section("Preferences") {
-                    Toggle("Push notifications", isOn: .constant(true))
+                    NavigationLink("Reminder settings") {
+                        ReminderSettingsView()
+                    }
                     Toggle("Weekly summary", isOn: .constant(false))
                 }
 
@@ -83,4 +85,5 @@ struct ProfileView: View {
         .environment(\.appTheme, .default)
         .environmentObject(AppEnvironment())
         .environmentObject(FamilyRoleStore())
+        .environmentObject(AppRouter())
 }

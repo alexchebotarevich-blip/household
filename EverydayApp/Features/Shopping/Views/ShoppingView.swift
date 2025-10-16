@@ -5,9 +5,11 @@ struct ShoppingView: View {
     @StateObject private var viewModel: ShoppingViewModel
     @Environment(\.appTheme) private var theme
     @EnvironmentObject private var roleStore: FamilyRoleStore
+    @EnvironmentObject private var router: AppRouter
     @State private var formState: ShoppingItemFormState = ShoppingItemFormState()
     @State private var isPresentingForm: Bool = false
     @State private var isEditing: Bool = false
+    @State private var highlightedListID: String?
 
     init(viewModel: ShoppingViewModel = ShoppingViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -61,6 +63,17 @@ struct ShoppingView: View {
                 )
             }
         }
+        .onReceive(router.$highlightedShoppingListID.removeDuplicates()) { listID in
+            highlightedListID = listID
+            if listID != nil {
+                router.clearShoppingHighlight()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                    if highlightedListID == listID {
+                        highlightedListID = nil
+                    }
+                }
+            }
+        }
     }
 
     private var pendingSection: some View {
@@ -85,6 +98,8 @@ struct ShoppingView: View {
                             .accessibilityLabel("Mark as purchased")
                         }
                     )
+                    .background(highlightBackground(for: item.category))
+                    .clipShape(RoundedRectangle(cornerRadius: theme.spacing.small, style: .continuous))
                     .contentShape(Rectangle())
                     .onTapGesture { presentForm(for: item) }
                     .swipeActions(edge: .trailing) {
@@ -134,6 +149,8 @@ struct ShoppingView: View {
                             .accessibilityLabel("Mark as pending")
                         }
                     )
+                    .background(highlightBackground(for: item.category))
+                    .clipShape(RoundedRectangle(cornerRadius: theme.spacing.small, style: .continuous))
                     .contentShape(Rectangle())
                     .onTapGesture { presentForm(for: item) }
                     .swipeActions(edge: .trailing) {
@@ -190,6 +207,18 @@ struct ShoppingView: View {
         }
         .multilineTextAlignment(.center)
         .padding(theme.spacing.large)
+    }
+
+    private func highlightBackground(for category: String) -> Color {
+        highlightedListID == slug(for: category) ? theme.colors.primary.opacity(0.18) : Color.clear
+    }
+
+    private func slug(for category: String) -> String {
+        category
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
     }
 
     private func presentForm(for item: ShoppingItem?) {
@@ -327,4 +356,5 @@ struct ShoppingItemFormView: View {
     ShoppingView()
         .environment(\.appTheme, .default)
         .environmentObject(FamilyRoleStore())
+        .environmentObject(AppRouter())
 }
