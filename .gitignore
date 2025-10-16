@@ -1,9 +1,15 @@
 .DS_Store
-.build/
-Packages/
-DerivedData/
-xcuserdata/
+/build/
+/.build/
+/Packages/
 .swiftpm/
-.idea/
-.vscode/
-*.xcodeproj/*
+DerivedData/
+.xcodeproj/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+Pods/
+
+# Firebase configuration files (copy real keys outside of version control)
+GoogleService-Info.plist
+Config/**/GoogleService-Info.plist

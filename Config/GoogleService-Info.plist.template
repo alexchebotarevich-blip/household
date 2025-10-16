@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copy this template to the configuration directory that matches your environment before building the app.
+
+ Recommended structure:
+   Config/
+     Development/GoogleService-Info.plist
+     Staging/GoogleService-Info.plist
+     Production/GoogleService-Info.plist
+
+ Each environment-specific file should be ignored by git (see .gitignore) and
+ populated with the credentials that Firebase generates for that environment.
+
+ Replace the placeholder values below when creating the real plist file.
+ For more details see: https://firebase.google.com/docs/ios/setup
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>GOOGLE_APP_ID</key>
+    <string>1:000000000000:ios:0000000000000000000000</string>
+    <key>GCM_SENDER_ID</key>
+    <string>000000000000</string>
+    <key>API_KEY</key>
+    <string>AIzaSyA-Your-Development-API-Key</string>
+    <key>PROJECT_ID</key>
+    <string>family-hub-dev</string>
+    <key>STORAGE_BUCKET</key>
+    <string>family-hub-dev.appspot.com</string>
+    <key>CLIENT_ID</key>
+    <string>000000000000-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com</string>
+    <key>REVERSED_CLIENT_ID</key>
+    <string>com.googleusercontent.apps.000000000000-abcdefghijklmnopqrstuvwxyz</string>
+    <key>BUNDLE_ID</key>
+    <string>com.yourcompany.familyhub.dev</string>
+    <key>DATABASE_URL</key>
+    <string>https://family-hub-dev.firebaseio.com</string>
+</dict>
+</plist>

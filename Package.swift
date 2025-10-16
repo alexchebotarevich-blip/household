@@ -2,26 +2,26 @@
 import PackageDescription
 
 let package = Package(
-    name: "FamilyApp",
+    name: "FamilyHub",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13)
+        .iOS(.v15),
+        .macOS(.v12)
     ],
     products: [
         .library(
-            name: "FamilyAppCore",
-            targets: ["FamilyAppCore"]
+            name: "FamilyHubCore",
+            targets: ["FamilyHubCore"]
         )
     ],
+    dependencies: [],
     targets: [
         .target(
-            name: "FamilyAppCore",
-            path: "Sources/FamilyAppCore"
+            name: "FamilyHubCore",
+            dependencies: []
         ),
         .testTarget(
-            name: "FamilyAppTests",
-            dependencies: ["FamilyAppCore"],
-            path: "Tests/FamilyAppTests"
+            name: "FamilyHubCoreTests",
+            dependencies: ["FamilyHubCore"]
         )
     ]
 )
