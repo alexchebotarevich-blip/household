@@ -36,6 +36,14 @@ public protocol FamilyRepository: AnyObject {
     ) -> Cancellable
 }
 
+public protocol FamilyRoleRepository: AnyObject {
+    func roles(for familyID: String) throws -> [FamilyRole]
+    func create(_ role: FamilyRole) throws
+    func update(_ role: FamilyRole) throws
+    func delete(roleID: String, familyID: String) throws
+    func reorder(roleIDs: [String], in familyID: String) throws
+}
+
 public protocol TaskRepository: AnyObject {
     func create(_ task: TaskItem) throws
     func update(_ task: TaskItem) throws

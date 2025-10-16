@@ -4,6 +4,7 @@ struct ProfileView: View {
     @StateObject private var viewModel: ProfileViewModel
     @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appEnvironment: AppEnvironment
+    @EnvironmentObject private var roleStore: FamilyRoleStore
     @State private var editedName: String = ""
 
     init(viewModel: ProfileViewModel = ProfileViewModel()) {
@@ -21,8 +22,32 @@ struct ProfileView: View {
                 }
 
                 Section("Household") {
-                    ForEach(viewModel.profile.householdMembers, id: \.self) { member in
-                        Text(member)
+                    ForEach(viewModel.profile.householdMembers) { member in
+                        Menu {
+                            ForEach(roleStore.roles) { role in
+                                Button {
+                                    viewModel.assign(roleID: role.id, to: member.id)
+                                } label: {
+                                    Label(role.title, systemImage: role.metadata.iconName ?? "person")
+                                    if member.roleID == role.id {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                            if member.roleID != nil {
+                                Button(role: .destructive) {
+                                    viewModel.assign(roleID: nil, to: member.id)
+                                } label: {
+                                    Label("Clear role", systemImage: "xmark.circle")
+                                }
+                            }
+                        } label: {
+                            LabeledContent(member.name, value: roleStore.assignmentLabel(for: member.roleID) ?? "Unassigned")
+                        }
+                    }
+
+                    NavigationLink("Manage roles") {
+                        FamilyRolesSettingsView(store: roleStore)
                     }
                 }
 
@@ -57,4 +82,5 @@ struct ProfileView: View {
     ProfileView()
         .environment(\.appTheme, .default)
         .environmentObject(AppEnvironment())
+        .environmentObject(FamilyRoleStore())
 }

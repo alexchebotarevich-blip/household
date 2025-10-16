@@ -176,6 +176,195 @@ public final class InMemoryFamilyRepository: FamilyRepository {
     }
 }
 
+public final class InMemoryFamilyRoleRepository: FamilyRoleRepository {
+    private let store: InMemoryRepositoryStore
+    private let mutationQueue = DispatchQueue(label: "InMemoryFamilyRoleRepository.mutation", attributes: .concurrent)
+
+    public init(store: InMemoryRepositoryStore = InMemoryRepositoryStore()) {
+        self.store = store
+    }
+
+    public func roles(for familyID: String) throws -> [FamilyRole] {
+        store.roles(familyID: familyID)
+    }
+
+    public func create(_ role: FamilyRole) throws {
+        try performMutation(for: role.familyID) { existing in
+            var roles = existing
+            var newRole = normalize(role)
+            try validateDuplicateTitle(newRole.title, excludingID: nil, within: roles)
+            if newRole.displayOrder < 0 {
+                newRole.displayOrder = (roles.map(\.displayOrder).max() ?? -1) + 1
+            }
+            roles.append(newRole)
+            return persist(roles, familyID: role.familyID, forcedDefaultID: newRole.isDefault ? newRole.id : nil)
+        }
+    }
+
+    public func update(_ role: FamilyRole) throws {
+        try performMutation(for: role.familyID) { existing in
+            guard existing.contains(where: { $0.id == role.id }) else {
+                throw RepositoryError.notFound
+            }
+            var roles = existing
+            var updatedRole = normalize(role)
+            try validateDuplicateTitle(updatedRole.title, excludingID: updatedRole.id, within: roles)
+            if let index = roles.firstIndex(where: { $0.id == updatedRole.id }) {
+                updatedRole.updatedAt = Date()
+                roles[index] = updatedRole
+            }
+            let defaultID = updatedRole.isDefault ? updatedRole.id : nil
+            return persist(roles, familyID: role.familyID, forcedDefaultID: defaultID)
+        }
+    }
+
+    public func delete(roleID: String, familyID: String) throws {
+        try performMutation(for: familyID) { existing in
+            guard let index = existing.firstIndex(where: { $0.id == roleID }) else {
+                throw RepositoryError.notFound
+            }
+            var roles = existing
+            let removed = roles.remove(at: index)
+            if roles.isEmpty {
+                roles.append(makeFallbackRole(for: familyID))
+            }
+            let defaultID = removed.isDefault ? roles.first?.id : nil
+            return persist(roles, familyID: familyID, forcedDefaultID: defaultID)
+        }
+    }
+
+    public func reorder(roleIDs: [String], in familyID: String) throws {
+        try performMutation(for: familyID) { existing in
+            guard existing.count == roleIDs.count else {
+                throw RepositoryError.notFound
+            }
+            var lookup = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+            var reordered: [FamilyRole] = []
+            for identifier in roleIDs {
+                guard var role = lookup.removeValue(forKey: identifier) else {
+                    throw RepositoryError.notFound
+                }
+                role.displayOrder = reordered.count
+                role.updatedAt = Date()
+                reordered.append(role)
+            }
+            guard lookup.isEmpty else {
+                throw RepositoryError.notFound
+            }
+            return persist(reordered, familyID: familyID)
+        }
+    }
+
+    private func performMutation(for familyID: String, mutation: ([FamilyRole]) throws -> [FamilyRole]) throws {
+        var mutationError: Error?
+        mutationQueue.sync(flags: .barrier) {
+            do {
+                let roles = store.roles(familyID: familyID)
+                let updated = try mutation(roles)
+                store.replaceRoles(updated, for: familyID)
+            } catch {
+                mutationError = error
+            }
+        }
+        if let error = mutationError {
+            throw error
+        }
+    }
+
+    private func persist(_ roles: [FamilyRole], familyID: String, forcedDefaultID: String? = nil) -> [FamilyRole] {
+        guard roles.isEmpty == false else { return [] }
+        var sorted = roles.sorted { lhs, rhs in
+            if lhs.displayOrder == rhs.displayOrder {
+                return lhs.createdAt < rhs.createdAt
+            }
+            return lhs.displayOrder < rhs.displayOrder
+        }
+
+        let defaultID: String
+        if let forcedDefaultID, sorted.contains(where: { $0.id == forcedDefaultID }) {
+            defaultID = forcedDefaultID
+        } else if let existingDefault = sorted.first(where: { $0.isDefault })?.id {
+            defaultID = existingDefault
+        } else if let first = sorted.first?.id {
+            defaultID = first
+        } else {
+            defaultID = makeFallbackRole(for: familyID).id
+        }
+
+        let timestamp = Date()
+        for index in sorted.indices {
+            if sorted[index].displayOrder != index {
+                sorted[index].displayOrder = index
+                sorted[index].updatedAt = timestamp
+            }
+            let shouldBeDefault = sorted[index].id == defaultID
+            if sorted[index].isDefault != shouldBeDefault {
+                sorted[index].isDefault = shouldBeDefault
+                sorted[index].updatedAt = timestamp
+            }
+        }
+        return sorted
+    }
+
+    private func validateDuplicateTitle(_ title: String, excludingID: String?, within roles: [FamilyRole]) throws {
+        let normalized = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard normalized.isEmpty == false else {
+            throw RepositoryError.underlying("Role title cannot be empty.")
+        }
+
+        let duplicate = roles.contains { role in
+            guard role.id != excludingID else { return false }
+            return role.title.caseInsensitiveCompare(normalized) == .orderedSame
+        }
+
+        if duplicate {
+            throw RepositoryError.alreadyExists
+        }
+    }
+
+    private func normalize(_ role: FamilyRole) -> FamilyRole {
+        var copy = role
+        copy.title = role.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        var metadata = role.metadata
+        metadata.assignmentLabel = metadata.assignmentLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        if metadata.assignmentLabel.isEmpty {
+            metadata.assignmentLabel = copy.title
+        }
+        let trimmedAnalyticsTag = metadata.analyticsTag.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedAnalyticsTag.isEmpty {
+            metadata.analyticsTag = copy.title.lowercased().replacingOccurrences(of: " ", with: "_")
+        } else {
+            metadata.analyticsTag = trimmedAnalyticsTag.lowercased().replacingOccurrences(of: " ", with: "_")
+        }
+        if let icon = metadata.iconName {
+            let trimmed = icon.trimmingCharacters(in: .whitespacesAndNewlines)
+            metadata.iconName = trimmed.isEmpty ? nil : trimmed
+        }
+        copy.metadata = metadata
+        return copy
+    }
+
+    private func makeFallbackRole(for familyID: String) -> FamilyRole {
+        let timestamp = Date()
+        return FamilyRole(
+            id: UUID().uuidString,
+            familyID: familyID,
+            title: "Member",
+            description: "Default household member role",
+            permissions: [.manageTasks, .manageShopping],
+            displayOrder: 0,
+            isDefault: true,
+            metadata: .init(
+                assignmentLabel: "Assign to member",
+                analyticsTag: "member",
+                iconName: "person.fill"
+            ),
+            createdAt: timestamp,
+            updatedAt: timestamp
+        )
+    }
+}
+
 public final class InMemoryTaskRepository: TaskRepository {
     private let store: InMemoryRepositoryStore
     private let listenerCenter: FirestoreListenerCenter

@@ -1,11 +1,32 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import Combine
+import FamilyHubCore
 
 private enum AuthRoute: Hashable {
     case signUp
     case login
     case passwordReset
+}
+
+private struct OnboardingRoleTemplatesKey: EnvironmentKey {
+    static let defaultValue: [FamilyRole.Template] = FamilyRole.defaultTemplates
+}
+
+private struct OnboardingRoleSelectionHandlerKey: EnvironmentKey {
+    static let defaultValue: (FamilyRole.Template) -> Void = { _ in }
+}
+
+extension EnvironmentValues {
+    public var onboardingRoleTemplates: [FamilyRole.Template] {
+        get { self[OnboardingRoleTemplatesKey.self] }
+        set { self[OnboardingRoleTemplatesKey.self] = newValue }
+    }
+
+    public var onboardingRoleSelectionHandler: (FamilyRole.Template) -> Void {
+        get { self[OnboardingRoleSelectionHandlerKey.self] }
+        set { self[OnboardingRoleSelectionHandlerKey.self] = newValue }
+    }
 }
 
 @MainActor
@@ -632,6 +653,9 @@ private struct PasswordResetView: View {
 private struct FamilyOnboardingView: View {
     let user: User
     @ObservedObject var viewModel: FamilyOnboardingViewModel
+    @Environment(\.onboardingRoleTemplates) private var roleTemplates
+    @Environment(\.onboardingRoleSelectionHandler) private var roleSelectionHandler
+    @State private var selectedRoleTemplateID: String = ""
 
     var body: some View {
         Form {
@@ -642,6 +666,9 @@ private struct FamilyOnboardingView: View {
                 TextField("Family last name", text: $viewModel.familyLastName)
 
                 Button {
+                    if let template = selectedTemplate {
+                        roleSelectionHandler(template)
+                    }
                     viewModel.createFamily()
                 } label: {
                     if viewModel.isCreatingFamily {
@@ -653,6 +680,21 @@ private struct FamilyOnboardingView: View {
                     }
                 }
                 .disabled(viewModel.isCreatingFamily)
+            }
+
+            Section("Your role") {
+                Picker("Primary role", selection: $selectedRoleTemplateID) {
+                    ForEach(roleTemplates, id: \.id) { template in
+                        Text(template.title).tag(template.id)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if let template = selectedTemplate {
+                    Text(template.description)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section("Join by username") {
@@ -704,6 +746,22 @@ private struct FamilyOnboardingView: View {
             }
         }
         .navigationTitle("Family Setup")
+        .onAppear {
+            if selectedRoleTemplateID.isEmpty {
+                selectedRoleTemplateID = roleTemplates.first?.id ?? ""
+            }
+            if let template = selectedTemplate {
+                roleSelectionHandler(template)
+            }
+        }
+        .onChange(of: selectedRoleTemplateID) { newValue in
+            guard let template = roleTemplates.first(where: { $0.id == newValue }) else { return }
+            roleSelectionHandler(template)
+        }
+    }
+
+    private var selectedTemplate: FamilyRole.Template? {
+        roleTemplates.first(where: { $0.id == selectedRoleTemplateID }) ?? roleTemplates.first
     }
 }
 

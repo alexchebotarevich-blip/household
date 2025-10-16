@@ -1,8 +1,10 @@
 import SwiftUI
+import FamilyHubCore
 
 struct ShoppingView: View {
     @StateObject private var viewModel: ShoppingViewModel
     @Environment(\.appTheme) private var theme
+    @EnvironmentObject private var roleStore: FamilyRoleStore
     @State private var formState: ShoppingItemFormState = ShoppingItemFormState()
     @State private var isPresentingForm: Bool = false
     @State private var isEditing: Bool = false
@@ -41,6 +43,7 @@ struct ShoppingView: View {
                 ShoppingItemFormView(
                     formState: $formState,
                     categories: viewModel.availableCategories,
+                    roleSuggestions: roleStore.roles,
                     isEditing: isEditing,
                     onSave: { state in
                         viewModel.save(form: state)
@@ -222,6 +225,7 @@ private struct ShoppingListRow<Accessory: View>: View {
 struct ShoppingItemFormView: View {
     @Binding var formState: ShoppingItemFormState
     let categories: [String]
+    let roleSuggestions: [FamilyRole]
     let isEditing: Bool
     let onSave: (ShoppingItemFormState) -> Void
     let onCancel: () -> Void
@@ -248,6 +252,32 @@ struct ShoppingItemFormView: View {
                     TextField("Assign to", text: $formState.assignee)
                         .textInputAutocapitalization(.words)
                         .disableAutocorrection(true)
+
+                    if !roleSuggestions.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: theme.spacing.small) {
+                                ForEach(roleSuggestions) { role in
+                                    Button {
+                                        formState.assignee = role.metadata.assignmentLabel
+                                    } label: {
+                                        HStack(spacing: theme.spacing.xSmall) {
+                                            if let icon = role.metadata.iconName {
+                                                Image(systemName: icon)
+                                            }
+                                            Text(role.metadata.assignmentLabel)
+                                        }
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 12)
+                                        .background(formState.assignee == role.metadata.assignmentLabel ? theme.colors.primary.opacity(0.15) : theme.colors.surface)
+                                        .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.vertical, theme.spacing.xSmall)
+                        }
+                    }
+
                     TextField("Notes", text: $formState.notes, axis: .vertical)
                         .lineLimit(2...4)
                 }
@@ -296,4 +326,5 @@ struct ShoppingItemFormView: View {
 #Preview {
     ShoppingView()
         .environment(\.appTheme, .default)
+        .environmentObject(FamilyRoleStore())
 }

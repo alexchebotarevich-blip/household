@@ -4,7 +4,7 @@ import Foundation
 public enum FirestoreCollection: String, CaseIterable, Codable, Sendable {
     case users
     case families
-    case roles
+    case familyRoles
     case tasks
     case shoppingItems
     case activityLogs
