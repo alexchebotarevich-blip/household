@@ -1,0 +1,9 @@
+#include? "Secrets.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.everydayapp
+APP_DISPLAY_NAME = EverydayApp
+API_BASE_URL = https://api.everyday.app
+ANALYTICS_API_KEY = prod-analytics-key
+APP_ENVIRONMENT = Production
+SWIFT_ACTIVE_COMPILATION_CONDITIONS =
+CODE_SIGN_STYLE = Automatic
