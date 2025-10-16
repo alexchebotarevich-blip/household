@@ -49,7 +49,7 @@ public struct AppUser: FirestoreEntity {
     }
 }
 
-public struct Role: FirestoreEntity {
+public struct FamilyRole: FirestoreEntity {
     public enum Permission: String, Codable, CaseIterable, Sendable {
         case manageFamily
         case manageMembers
@@ -58,30 +58,151 @@ public struct Role: FirestoreEntity {
         case viewAnalytics
     }
 
-    public static let collection: FirestoreCollection = .roles
+    public struct Metadata: Codable, Equatable, Sendable {
+        public var assignmentLabel: String
+        public var analyticsTag: String
+        public var iconName: String?
+
+        public init(assignmentLabel: String, analyticsTag: String, iconName: String? = nil) {
+            self.assignmentLabel = assignmentLabel
+            self.analyticsTag = analyticsTag
+            self.iconName = iconName
+        }
+    }
+
+    public static let collection: FirestoreCollection = .familyRoles
 
     public let id: String
-    public var name: String
-    public var description: String
+    public var familyID: String
+    public var title: String
+    public var description: String?
     public var permissions: [Permission]
+    public var displayOrder: Int
+    public var isDefault: Bool
+    public var metadata: Metadata
     public var createdAt: Date
     public var updatedAt: Date?
 
     public init(
         id: String,
-        name: String,
-        description: String,
+        familyID: String,
+        title: String,
+        description: String?,
         permissions: [Permission],
+        displayOrder: Int,
+        isDefault: Bool,
+        metadata: Metadata,
         createdAt: Date,
         updatedAt: Date?
     ) {
         self.id = id
-        self.name = name
+        self.familyID = familyID
+        self.title = title
         self.description = description
         self.permissions = permissions
+        self.displayOrder = displayOrder
+        self.isDefault = isDefault
+        self.metadata = metadata
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+}
+
+public extension FamilyRole {
+    struct Template: Identifiable, Equatable, Sendable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let permissions: [Permission]
+        public let metadata: Metadata
+
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            permissions: [Permission],
+            metadata: Metadata
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.permissions = permissions
+            self.metadata = metadata
+        }
+
+        public func makeRole(
+            familyID: String,
+            displayOrder: Int,
+            isDefault: Bool = false,
+            createdAt: Date = Date()
+        ) -> FamilyRole {
+            FamilyRole(
+                id: UUID().uuidString,
+                familyID: familyID,
+                title: title,
+                description: description,
+                permissions: permissions,
+                displayOrder: displayOrder,
+                isDefault: isDefault,
+                metadata: metadata,
+                createdAt: createdAt,
+                updatedAt: nil
+            )
+        }
+    }
+
+    static let defaultTemplates: [Template] = [
+        Template(
+            title: "Partner",
+            description: "Shares household planning and decisions",
+            permissions: Permission.allCases,
+            metadata: Metadata(
+                assignmentLabel: "Assign to partner",
+                analyticsTag: "partner",
+                iconName: "heart.fill"
+            )
+        ),
+        Template(
+            title: "Child",
+            description: "Focuses on assigned chores and personal tasks",
+            permissions: [.manageTasks, .manageShopping],
+            metadata: Metadata(
+                assignmentLabel: "Assign to child",
+                analyticsTag: "child",
+                iconName: "figure.and.child.holdinghands"
+            )
+        ),
+        Template(
+            title: "Grandparent",
+            description: "Helps with oversight and celebrations",
+            permissions: [.manageFamily, .manageShopping],
+            metadata: Metadata(
+                assignmentLabel: "Assign to grandparent",
+                analyticsTag: "grandparent",
+                iconName: "person.2.square.stack"
+            )
+        ),
+        Template(
+            title: "Caregiver",
+            description: "Supports routines and schedules",
+            permissions: [.manageTasks, .manageShopping],
+            metadata: Metadata(
+                assignmentLabel: "Assign to caregiver",
+                analyticsTag: "caregiver",
+                iconName: "stethoscope"
+            )
+        ),
+        Template(
+            title: "Pet",
+            description: "Track pet related responsibilities",
+            permissions: [.manageTasks],
+            metadata: Metadata(
+                assignmentLabel: "Assign to pet",
+                analyticsTag: "pet",
+                iconName: "pawprint.fill"
+            )
+        )
+    ]
 }
 
 public struct Family: FirestoreEntity {

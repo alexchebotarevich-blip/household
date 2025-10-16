@@ -54,4 +54,5 @@ struct RootTabView: View {
     RootTabView()
         .environment(\.appTheme, AppTheme.default)
         .environmentObject(AppEnvironment())
+        .environmentObject(FamilyRoleStore())
 }

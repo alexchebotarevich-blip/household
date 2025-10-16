@@ -34,13 +34,21 @@ final class ModelEncodingTests: XCTestCase {
         XCTAssertEqual(decoded, user)
     }
 
-    func testRoleRoundTrip() throws {
+    func testFamilyRoleRoundTrip() throws {
         let timestamp = Date(timeIntervalSince1970: 1_689_100_000)
-        let role = Role(
+        let role = FamilyRole(
             id: "role_manager",
-            name: "Manager",
+            familyID: "family_42",
+            title: "Partner",
             description: "Full access to family management features",
-            permissions: Role.Permission.allCases,
+            permissions: FamilyRole.Permission.allCases,
+            displayOrder: 0,
+            isDefault: true,
+            metadata: .init(
+                assignmentLabel: "Assign to partner",
+                analyticsTag: "partner",
+                iconName: "heart.fill"
+            ),
             createdAt: timestamp,
             updatedAt: timestamp.addingTimeInterval(200)
         )

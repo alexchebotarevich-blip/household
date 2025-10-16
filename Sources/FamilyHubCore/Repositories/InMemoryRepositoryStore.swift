@@ -3,7 +3,7 @@ import Foundation
 final class InMemoryRepositoryStore {
     private var users: [String: (user: AppUser, password: String)] = [:]
     private var families: [String: Family] = [:]
-    private var roles: [String: Role] = [:]
+    private var familyRoles: [String: [String: FamilyRole]] = [:] // familyID -> roleID -> FamilyRole
     private var tasks: [String: [String: TaskItem]] = [:] // familyID -> taskID -> TaskItem
     private var shoppingItems: [String: [String: ShoppingItem]] = [:] // familyID -> itemID -> ShoppingItem
     private var activityLogs: [String: [ActivityLog]] = [:] // familyID -> logs
@@ -32,18 +32,47 @@ final class InMemoryRepositoryStore {
         accessQueue.sync { users[id]?.user }
     }
 
-    func saveRole(_ role: Role) {
+    func saveRole(_ role: FamilyRole) {
         accessQueue.sync(flags: .barrier) {
-            self.roles[role.id] = role
+            var roles = self.familyRoles[role.familyID, default: [:]]
+            roles[role.id] = role
+            self.familyRoles[role.familyID] = roles
         }
     }
 
-    func role(withID id: String) -> Role? {
-        accessQueue.sync { roles[id] }
+    func role(familyID: String, roleID: String) -> FamilyRole? {
+        accessQueue.sync { familyRoles[familyID]?[roleID] }
     }
 
-    func allRoles() -> [Role] {
-        accessQueue.sync { Array(roles.values) }
+    func deleteRole(familyID: String, roleID: String) -> FamilyRole? {
+        accessQueue.sync(flags: .barrier) {
+            guard var roles = self.familyRoles[familyID] else { return nil }
+            let removed = roles.removeValue(forKey: roleID)
+            self.familyRoles[familyID] = roles
+            return removed
+        }
+    }
+
+    func roles(familyID: String) -> [FamilyRole] {
+        accessQueue.sync {
+            guard let values = familyRoles[familyID]?.values else { return [] }
+            return values.sorted { lhs, rhs in
+                if lhs.displayOrder == rhs.displayOrder {
+                    return lhs.createdAt < rhs.createdAt
+                }
+                return lhs.displayOrder < rhs.displayOrder
+            }
+        }
+    }
+
+    func replaceRoles(_ roles: [FamilyRole], for familyID: String) {
+        accessQueue.sync(flags: .barrier) {
+            var dictionary: [String: FamilyRole] = [:]
+            for role in roles {
+                dictionary[role.id] = role
+            }
+            self.familyRoles[familyID] = dictionary
+        }
     }
 
     func saveFamily(_ family: Family) {
