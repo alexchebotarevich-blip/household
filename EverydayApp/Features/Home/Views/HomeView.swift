@@ -51,7 +51,7 @@ struct HomeView: View {
     private var shoppingHighlightsSection: some View {
         AppFormSection(title: "Shopping List") {
             ForEach(viewModel.shoppingHighlights) { item in
-                AppListRow(title: item.name, subtitle: "Quantity: \(item.quantity)") {
+                AppListRow(title: item.name, subtitle: item.detailSummary) {
                     if let notes = item.notes {
                         Text(notes)
                     } else {
