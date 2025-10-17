@@ -17,7 +17,7 @@ final class ShoppingViewModel: ObservableObject {
     private var undoTimer: AnyCancellable?
 
     init(
-        repository: ShoppingListRepository = OfflineFirstShoppingRepository(),
+        repository: ShoppingListRepository = OfflineFirstShoppingRepository.shared,
         user: ShoppingUser = .current,
         reminderScheduler: ReminderScheduling = LocalNotificationScheduler.shared,
         preferencesStore: ReminderPreferencesStore = .shared
