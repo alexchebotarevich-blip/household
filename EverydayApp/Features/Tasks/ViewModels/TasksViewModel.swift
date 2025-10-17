@@ -6,17 +6,26 @@ final class TasksViewModel: ObservableObject {
     @Published var filter: TaskFilter = .active
 
     private let allTasksSubject: CurrentValueSubject<[TaskItem], Never>
+    private let reminderScheduler: ReminderScheduling
+    private let preferencesStore: ReminderPreferencesStore
     private var cancellables = Set<AnyCancellable>()
 
-    init(initialTasks: [TaskItem] = TaskItem.samples) {
-        allTasksSubject = CurrentValueSubject(initialTasks)
+    init(initialTasks: [TaskItem] = TaskItem.samples,
+         reminderScheduler: ReminderScheduling = LocalNotificationScheduler.shared,
+         preferencesStore: ReminderPreferencesStore = .shared) {
+        self.reminderScheduler = reminderScheduler
+        self.preferencesStore = preferencesStore
+        self.allTasksSubject = CurrentValueSubject(initialTasks)
+        initialTasks.forEach { registerAndSchedule($0) }
         bind()
     }
 
     func addTask(title: String, dueDate: Date) {
+        let newTask = TaskItem(title: title, dueDate: dueDate)
         var updated = allTasksSubject.value
-        updated.append(TaskItem(title: title, dueDate: dueDate))
+        updated.append(newTask)
         allTasksSubject.send(updated)
+        registerAndSchedule(newTask)
     }
 
     func toggleCompletion(for task: TaskItem) {
@@ -24,6 +33,7 @@ final class TasksViewModel: ObservableObject {
         if let index = updated.firstIndex(where: { $0.id == task.id }) {
             updated[index].isCompleted.toggle()
             allTasksSubject.send(updated)
+            registerAndSchedule(updated[index])
         }
     }
 
@@ -45,6 +55,15 @@ final class TasksViewModel: ObservableObject {
                 self?.tasks = tasks
             }
             .store(in: &cancellables)
+    }
+
+    private func registerAndSchedule(_ task: TaskItem) {
+        preferencesStore.register(task: task)
+        if task.isCompleted {
+            reminderScheduler.cancelTaskReminder(for: task.id)
+        } else {
+            reminderScheduler.scheduleTaskReminder(for: task)
+        }
     }
 }
 

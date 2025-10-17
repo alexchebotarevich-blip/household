@@ -1,0 +1,23 @@
+{
+  "name": "everydayapp-functions",
+  "version": "0.1.0",
+  "description": "Firebase Cloud Functions for EverydayApp reminders and rewards",
+  "engines": {
+    "node": "18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "deploy": "firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.11.1",
+    "firebase-functions": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.6",
+    "eslint": "^8.51.0",
+    "typescript": "^5.2.2"
+  }
+}

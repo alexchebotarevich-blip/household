@@ -26,6 +26,10 @@ fastlane/test_output/
 GoogleService-Info.plist
 GoogleService-Info-*.plist
 
+# Cloud Functions (Firebase)
+CloudFunctions/node_modules/
+CloudFunctions/lib/
+
 # Secrets and configuration
 **/Secrets.xcconfig
 *.env

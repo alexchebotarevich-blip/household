@@ -10,16 +10,22 @@ final class ShoppingViewModel: ObservableObject {
 
     private let repository: ShoppingListRepository
     private let user: ShoppingUser
+    private let reminderScheduler: ReminderScheduling
+    private let preferencesStore: ReminderPreferencesStore
     private var cancellables = Set<AnyCancellable>()
     private var recentlyDeletedItem: ShoppingItem?
     private var undoTimer: AnyCancellable?
 
     init(
         repository: ShoppingListRepository = OfflineFirstShoppingRepository(),
-        user: ShoppingUser = .current
+        user: ShoppingUser = .current,
+        reminderScheduler: ReminderScheduling = LocalNotificationScheduler.shared,
+        preferencesStore: ReminderPreferencesStore = .shared
     ) {
         self.repository = repository
         self.user = user
+        self.reminderScheduler = reminderScheduler
+        self.preferencesStore = preferencesStore
         bind()
     }
 
@@ -128,6 +134,37 @@ final class ShoppingViewModel: ObservableObject {
         var categories = Set(ShoppingViewModel.defaultCategories)
         items.map { $0.category }.forEach { categories.insert($0) }
         availableCategories = categories.sorted()
+        scheduleReminders(forPendingItems: pending)
+    }
+
+    private func scheduleReminders(forPendingItems pending: [ShoppingItem]) {
+        let grouped = Dictionary(grouping: pending) { $0.category }
+        let activeListIDs = grouped.keys.map { slug(for: $0) }
+
+        for (category, items) in grouped {
+            let slug = slug(for: category)
+            preferencesStore.registerShoppingList(id: slug, title: category)
+            reminderScheduler.scheduleShoppingReminder(listID: slug, title: category, pendingItemCount: items.count)
+        }
+
+        for category in availableCategories where !grouped.keys.contains(category) {
+            let slug = slug(for: category)
+            preferencesStore.registerShoppingList(id: slug, title: category)
+            reminderScheduler.cancelShoppingReminder(for: slug)
+        }
+
+        let registeredIDs = preferencesStore.preferences.shoppingLists.map(\.id)
+        for registeredID in registeredIDs where !activeListIDs.contains(registeredID) {
+            reminderScheduler.cancelShoppingReminder(for: registeredID)
+        }
+    }
+
+    private func slug(for category: String) -> String {
+        category
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
     }
 
     private func scheduleUndoCleanup() {

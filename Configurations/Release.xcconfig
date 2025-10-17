@@ -7,3 +7,4 @@ ANALYTICS_API_KEY = prod-analytics-key
 APP_ENVIRONMENT = Production
 SWIFT_ACTIVE_COMPILATION_CONDITIONS =
 CODE_SIGN_STYLE = Automatic
+CODE_SIGN_ENTITLEMENTS = EverydayApp/App/EverydayApp.entitlements
