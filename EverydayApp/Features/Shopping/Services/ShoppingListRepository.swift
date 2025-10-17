@@ -16,6 +16,8 @@ protocol ShoppingListRepository {
 }
 
 final class OfflineFirstShoppingRepository: ShoppingListRepository {
+    static let shared = OfflineFirstShoppingRepository()
+
     private let storageQueue = DispatchQueue(label: "OfflineFirstShoppingRepository.storage", attributes: .concurrent)
     private let cache: ShoppingListCache
     private let itemsSubject: CurrentValueSubject<[ShoppingItem], Never>
@@ -25,10 +27,17 @@ final class OfflineFirstShoppingRepository: ShoppingListRepository {
     init(cache: ShoppingListCache = ShoppingListCache()) {
         self.cache = cache
         let cachedItems = cache.loadItems()
+        let initialItems = cachedItems.isEmpty ? ShoppingItem.samples : cachedItems
         let cachedActivities = cache.loadActivityEntries()
-        self.itemsByID = Dictionary(uniqueKeysWithValues: cachedItems.map { ($0.id, $0) })
-        self.itemsSubject = CurrentValueSubject(OfflineFirstShoppingRepository.sortedItems(from: cachedItems))
-        self.activitySubject = CurrentValueSubject(cachedActivities.sorted { $0.timestamp > $1.timestamp })
+        let initialActivities: [ShoppingActivityLogEntry]
+        if cachedActivities.isEmpty {
+            initialActivities = OfflineFirstShoppingRepository.bootstrapActivities(from: initialItems)
+        } else {
+            initialActivities = cachedActivities.sorted { $0.timestamp > $1.timestamp }
+        }
+        self.itemsByID = Dictionary(uniqueKeysWithValues: initialItems.map { ($0.id, $0) })
+        self.itemsSubject = CurrentValueSubject(OfflineFirstShoppingRepository.sortedItems(from: initialItems))
+        self.activitySubject = CurrentValueSubject(initialActivities)
     }
 
     var updates: AnyPublisher<[ShoppingItem], Never> {
@@ -167,6 +176,23 @@ final class OfflineFirstShoppingRepository: ShoppingListRepository {
                 return lhsDate > rhsDate
             }
         }
+    }
+
+    private static func bootstrapActivities(from items: [ShoppingItem]) -> [ShoppingActivityLogEntry] {
+        items
+            .compactMap { item in
+                guard item.status == .purchased, let purchasedAt = item.purchasedAt else { return nil }
+                return ShoppingActivityLogEntry(
+                    itemID: item.id,
+                    itemName: item.name,
+                    quantity: item.quantity,
+                    category: item.category,
+                    actorName: item.purchasedBy ?? "Household",
+                    action: .purchased,
+                    timestamp: purchasedAt
+                )
+            }
+            .sorted { $0.timestamp > $1.timestamp }
     }
 }
 
