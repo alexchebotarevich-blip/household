@@ -73,12 +73,14 @@ final class ShoppingViewModel: ObservableObject {
         }
     }
 
-    func togglePurchased(for item: ShoppingItem) {
+    @discardableResult
+    func togglePurchased(for item: ShoppingItem) -> ShoppingItem? {
         if item.status == .pending {
-            _ = repository.markPurchased(id: item.id, by: user)
+            return repository.markPurchased(id: item.id, by: user)
         } else if item.status == .purchased {
-            _ = repository.markPending(id: item.id)
+            return repository.markPending(id: item.id)
         }
+        return nil
     }
 
     func delete(_ item: ShoppingItem) {

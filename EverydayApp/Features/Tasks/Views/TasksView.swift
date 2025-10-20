@@ -21,12 +21,15 @@ struct TasksView: View {
                         AppListRow(title: task.title,
                                    subtitle: task.dueDate.formatted(date: .abbreviated, time: .shortened)) {
                             Button {
-                                viewModel.toggleCompletion(for: task)
+                                if let updated = viewModel.toggleCompletion(for: task), updated.isCompleted,
+                                   let result = GamificationEngine.shared.processTaskCompletion(updated) {
+                                    router.pendingRewardMessage = result.message
+                                }
                             } label: {
                                 Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                             }
                             .buttonStyle(.plain)
-                        }
+
                         .padding(.vertical, theme.spacing.xSmall)
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)

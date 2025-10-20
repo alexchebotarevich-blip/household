@@ -43,7 +43,8 @@ final class TasksViewModel: ObservableObject {
         registerAndSchedule(task)
     }
 
-    func toggleCompletion(for task: TaskItem) {
+    @discardableResult
+    func toggleCompletion(for task: TaskItem) -> TaskItem? {
         let updatedTask = repository.update(id: task.id) { item in
             item.isCompleted.toggle()
             if item.isCompleted {
@@ -60,6 +61,7 @@ final class TasksViewModel: ObservableObject {
         if let updatedTask {
             registerAndSchedule(updatedTask)
         }
+        return updatedTask
     }
 
     private func bind() {
