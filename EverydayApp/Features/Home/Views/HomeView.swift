@@ -85,6 +85,9 @@ struct HomeView: View {
                 PrimaryButton(title: "Open Analytics", icon: "chart.bar.doc.horizontal.fill") {
                     viewModel.showAnalytics()
                 }
+                PrimaryButton(title: "Open Rewards", icon: "star.circle.fill") {
+                    viewModel.showRewards()
+                }
             }
         }
     }
@@ -170,6 +173,8 @@ struct HomeView: View {
             HistoryView()
         case .analytics:
             AnalyticsView()
+        case .rewards:
+            RewardsView()
         }
     }
 

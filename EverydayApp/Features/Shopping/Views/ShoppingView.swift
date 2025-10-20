@@ -89,7 +89,10 @@ struct ShoppingView: View {
                         subtitle: item.detailSummary,
                         accessory: {
                             Button {
-                                viewModel.togglePurchased(for: item)
+                                if let updated = viewModel.togglePurchased(for: item), updated.isPurchased {
+                                    let result = GamificationEngine.shared.processPurchase(updated)
+                                    router.pendingRewardMessage = result.message
+                                }
                             } label: {
                                 Image(systemName: "cart.badge.checkmark")
                                     .foregroundStyle(theme.colors.primary)
@@ -104,7 +107,10 @@ struct ShoppingView: View {
                     .onTapGesture { presentForm(for: item) }
                     .swipeActions(edge: .trailing) {
                         Button("Purchased") {
-                            viewModel.togglePurchased(for: item)
+                            if let updated = viewModel.togglePurchased(for: item), updated.isPurchased {
+                                let result = GamificationEngine.shared.processPurchase(updated)
+                                router.pendingRewardMessage = result.message
+                            }
                         }
                         .tint(.green)
 

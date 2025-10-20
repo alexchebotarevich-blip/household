@@ -49,6 +49,11 @@
     E8E7914D29E74FDDA83AB306 /* CombineExt in Frameworks */ = {isa = PBXBuildFile; productRef = E8E7914D29E74FDDA83AA106 /* CombineExt */; };
     E8E7914D29E74FDDA83AB307 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E8E7914D29E74FDDA83AA107 /* Alamofire */; };
     E8E7914D29E74FDDA83AF102 /* ShoppingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8E7914D29E74FDDA83AF101 /* ShoppingViewModelTests.swift */; };
+    BE1B0C01FD1D4C10A1B1B001 /* GamificationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1B0C01FD1D4C10A1B1A001 /* GamificationModels.swift */; };
+    BE1B0C01FD1D4C10A1B1B002 /* GamificationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1B0C01FD1D4C10A1B1A002 /* GamificationStore.swift */; };
+    BE1B0C01FD1D4C10A1B1B003 /* GamificationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1B0C01FD1D4C10A1B1A003 /* GamificationEngine.swift */; };
+    BE1B0C01FD1D4C10A1B1B004 /* RewardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1B0C01FD1D4C10A1B1A004 /* RewardsView.swift */; };
+    BE1B0C01FD1D4C10A1B1B005 /* GamificationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1B0C01FD1D4C10A1B1A005 /* GamificationEngineTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +109,11 @@
     E8E7914D29E74FDDA83AC901 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
     E8E7914D29E74FDDA83AC902 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
     E8E7914D29E74FDDA83AC903 /* Secrets.template.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.template.xcconfig; sourceTree = "<group>"; };
+    AE1B0C01FD1D4C10A1B1A001 /* GamificationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamificationModels.swift; sourceTree = "<group>"; };
+    AE1B0C01FD1D4C10A1B1A002 /* GamificationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamificationStore.swift; sourceTree = "<group>"; };
+    AE1B0C01FD1D4C10A1B1A003 /* GamificationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamificationEngine.swift; sourceTree = "<group>"; };
+    AE1B0C01FD1D4C10A1B1A004 /* RewardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardsView.swift; sourceTree = "<group>"; };
+    AE1B0C01FD1D4C10A1B1A005 /* GamificationEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamificationEngineTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -182,6 +192,7 @@
             E8E7914D29E74FDDA83AD104 /* Tasks */,
             E8E7914D29E74FDDA83AD107 /* Shopping */,
             E8E7914D29E74FDDA83AD10A /* Profile */,
+            GE1B0C01FD1D4C10A1B1C002 /* Rewards */,
         );
         path = Features;
         sourceTree = "<group>";
@@ -202,6 +213,7 @@
             E8E7914D29E74FDDA83AD301 /* Firebase */,
             E8E7914D29E74FDDA83AD302 /* Networking */,
             5DD776C28B154BC395FA10E0D845C703 /* Analytics */,
+            GE1B0C01FD1D4C10A1B1C001 /* Gamification */,
         );
         path = Services;
         sourceTree = "<group>";
@@ -241,6 +253,7 @@
             E8E7914D29E74FDDA83AF101 /* ShoppingViewModelTests.swift */,
             D849B705EDDE4425ABF1992B464A0238 /* HouseholdAnalyticsCalculatorTests.swift */,
             61459CFD383A4CE9BF87788A9D7515C4 /* HomeViewModelNavigationTests.swift */,
+            AE1B0C01FD1D4C10A1B1A005 /* GamificationEngineTests.swift */,
         );
         path = EverydayAppTests;
         sourceTree = "<group>";
@@ -459,6 +472,24 @@
         path = Analytics;
         sourceTree = "<group>";
     };
+    GE1B0C01FD1D4C10A1B1C001 /* Gamification */ = {
+        isa = PBXGroup;
+        children = (
+            AE1B0C01FD1D4C10A1B1A001 /* GamificationModels.swift */,
+            AE1B0C01FD1D4C10A1B1A002 /* GamificationStore.swift */,
+            AE1B0C01FD1D4C10A1B1A003 /* GamificationEngine.swift */,
+        );
+        path = Gamification;
+        sourceTree = "<group>";
+    };
+    GE1B0C01FD1D4C10A1B1C002 /* Rewards */ = {
+        isa = PBXGroup;
+        children = (
+            AE1B0C01FD1D4C10A1B1A004 /* RewardsView.swift */,
+        );
+        path = Rewards;
+        sourceTree = "<group>";
+    };
     E8E7914D29E74FDDA83AD402 /* Preview Content */ = {
         isa = PBXGroup;
         children = (
@@ -620,6 +651,10 @@
             50627AA4410E49A8B91B28331BBA103D /* HistoryView.swift in Sources */,
             F494CF9CCACF4E879FFB273232E6FECD /* AnalyticsViewModel.swift in Sources */,
             CCFF8528228F49DA9187D36EFB08E8A3 /* AnalyticsView.swift in Sources */,
+            BE1B0C01FD1D4C10A1B1B001 /* GamificationModels.swift in Sources */,
+            BE1B0C01FD1D4C10A1B1B002 /* GamificationStore.swift in Sources */,
+            BE1B0C01FD1D4C10A1B1B003 /* GamificationEngine.swift in Sources */,
+            BE1B0C01FD1D4C10A1B1B004 /* RewardsView.swift in Sources */,
         );
         runOnlyForDeploymentPostprocessing = 0;
     };
@@ -630,6 +665,7 @@
             E8E7914D29E74FDDA83AF102 /* ShoppingViewModelTests.swift in Sources */,
             631D4FFA32CB4648A5D4F611399AC4D2 /* HouseholdAnalyticsCalculatorTests.swift in Sources */,
             F1DA9AA1C95A48EEAE6EDCCF52C4BD98 /* HomeViewModelNavigationTests.swift in Sources */,
+            BE1B0C01FD1D4C10A1B1B005 /* GamificationEngineTests.swift in Sources */,
         );
         runOnlyForDeploymentPostprocessing = 0;
     };

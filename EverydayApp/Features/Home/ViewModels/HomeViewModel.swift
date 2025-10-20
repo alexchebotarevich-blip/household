@@ -6,6 +6,7 @@ final class HomeViewModel: ObservableObject {
     enum Route: String, Identifiable {
         case history
         case analytics
+        case rewards
 
         var id: String { rawValue }
     }
@@ -50,6 +51,10 @@ final class HomeViewModel: ObservableObject {
 
     func showAnalytics() {
         route = .analytics
+    }
+
+    func showRewards() {
+        route = .rewards
     }
 
     func clearRoute() {
