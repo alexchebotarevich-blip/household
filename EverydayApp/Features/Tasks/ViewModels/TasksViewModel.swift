@@ -5,40 +5,65 @@ final class TasksViewModel: ObservableObject {
     @Published private(set) var tasks: [TaskItem] = []
     @Published var filter: TaskFilter = .active
 
-    private let allTasksSubject: CurrentValueSubject<[TaskItem], Never>
+    private let repository: TaskRepository
     private let reminderScheduler: ReminderScheduling
     private let preferencesStore: ReminderPreferencesStore
     private var cancellables = Set<AnyCancellable>()
 
-    init(initialTasks: [TaskItem] = TaskItem.samples,
-         reminderScheduler: ReminderScheduling = LocalNotificationScheduler.shared,
-         preferencesStore: ReminderPreferencesStore = .shared) {
+    init(
+        repository: TaskRepository = InMemoryTaskRepository.shared,
+        reminderScheduler: ReminderScheduling = LocalNotificationScheduler.shared,
+        preferencesStore: ReminderPreferencesStore = .shared,
+        initialTasks: [TaskItem] = TaskItem.samples
+    ) {
+        self.repository = repository
         self.reminderScheduler = reminderScheduler
         self.preferencesStore = preferencesStore
-        self.allTasksSubject = CurrentValueSubject(initialTasks)
-        initialTasks.forEach { registerAndSchedule($0) }
+
+        if !initialTasks.isEmpty {
+            repository.replaceAll(initialTasks)
+            initialTasks.forEach { registerAndSchedule($0) }
+        }
+
         bind()
     }
 
-    func addTask(title: String, dueDate: Date) {
-        let newTask = TaskItem(title: title, dueDate: dueDate)
-        var updated = allTasksSubject.value
-        updated.append(newTask)
-        allTasksSubject.send(updated)
-        registerAndSchedule(newTask)
+    func addTask(title: String, dueDate: Date, assignedTo: String? = nil, type: TaskItem.Kind = .chore) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return }
+
+        let task = TaskItem(
+            title: trimmedTitle,
+            dueDate: dueDate,
+            assignedTo: assignedTo?.nilWhenEmpty,
+            type: type
+        )
+
+        repository.add(task)
+        registerAndSchedule(task)
     }
 
     func toggleCompletion(for task: TaskItem) {
-        var updated = allTasksSubject.value
-        if let index = updated.firstIndex(where: { $0.id == task.id }) {
-            updated[index].isCompleted.toggle()
-            allTasksSubject.send(updated)
-            registerAndSchedule(updated[index])
+        let updatedTask = repository.update(id: task.id) { item in
+            item.isCompleted.toggle()
+            if item.isCompleted {
+                item.completedAt = Date()
+                if item.completedBy?.isEmpty ?? true {
+                    item.completedBy = item.assignedTo ?? "You"
+                }
+            } else {
+                item.completedAt = nil
+                item.completedBy = nil
+            }
+        }
+
+        if let updatedTask {
+            registerAndSchedule(updatedTask)
         }
     }
 
     private func bind() {
-        allTasksSubject
+        repository.updates
             .combineLatest($filter.removeDuplicates())
             .map { tasks, filter in
                 switch filter {
@@ -64,6 +89,13 @@ final class TasksViewModel: ObservableObject {
         } else {
             reminderScheduler.scheduleTaskReminder(for: task)
         }
+    }
+}
+
+private extension String {
+    var nilWhenEmpty: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 
